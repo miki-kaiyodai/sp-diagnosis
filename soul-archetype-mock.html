@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>魂のアーキタイプ診断</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600;700&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap');
+
+:root {
+  --bg-deep: #0a0a0f;
+  --bg-card: #12121a;
+  --bg-card-hover: #1a1a26;
+  --bg-glass: rgba(18, 18, 26, 0.85);
+  --text-primary: #e8e4df;
+  --text-secondary: #9a958e;
+  --text-dim: #5a564f;
+  --accent-gold: #c9a96e;
+  --accent-gold-dim: rgba(201, 169, 110, 0.15);
+  --accent-gold-glow: rgba(201, 169, 110, 0.3);
+  --accent-mystic: #7b6ea7;
+  --accent-mystic-dim: rgba(123, 110, 167, 0.15);
+  --border-subtle: rgba(201, 169, 110, 0.08);
+  --border-active: rgba(201, 169, 110, 0.25);
+  --ring-1: rgba(201, 169, 110, 0.04);
+  --ring-2: rgba(123, 110, 167, 0.03);
+  /* archetype colors */
+  --color-circle: #c9a96e;
+  --color-triangle: #7b8fb0;
+  --color-star: #8fa77b;
+  --color-heart: #b07b8f;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* === BACKGROUND ATMOSPHERE === */
+.atmosphere {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.atmosphere::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: -20%;
+  width: 80vw;
+  height: 80vw;
+  background: radial-gradient(ellipse, rgba(123, 110, 167, 0.06) 0%, transparent 70%);
+  animation: drift1 25s ease-in-out infinite;
+}
+.atmosphere::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  right: -20%;
+  width: 70vw;
+  height: 70vw;
+  background: radial-gradient(ellipse, rgba(201, 169, 110, 0.04) 0%, transparent 70%);
+  animation: drift2 30s ease-in-out infinite;
+}
+@keyframes drift1 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(5vw, 3vw) rotate(5deg); }
+}
+@keyframes drift2 {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(-4vw, -2vw) rotate(-3deg); }
+}
+
+/* === LAYOUT === */
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* === SCREEN MANAGEMENT === */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* === LANDING === */
+.landing {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 60px 24px;
+}
+
+.landing-sigil {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 48px;
+  opacity: 0;
+  animation: fadeUp 1.2s ease-out 0.3s forwards;
+}
+.landing-sigil svg {
+  width: 100%;
+  height: 100%;
+}
+
+.landing h1 {
+  font-family: 'Noto Serif JP', serif;
+  font-weight: 300;
+  font-size: 2rem;
+  letter-spacing: 0.2em;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  opacity: 0;
+  animation: fadeUp 1.2s ease-out 0.5s forwards;
+}
+
+.landing-sub {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.35em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 48px;
+  opacity: 0;
+  animation: fadeUp 1.2s ease-out 0.7s forwards;
+}
+
+.landing-desc {
+  font-size: 0.9rem;
+  line-height: 2;
+  color: var(--text-secondary);
+  max-width: 440px;
+  margin-bottom: 56px;
+  opacity: 0;
+  animation: fadeUp 1.2s ease-out 0.9s forwards;
+}
+
+.btn-start {
+  position: relative;
+  background: transparent;
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  font-family: 'Noto Serif JP', serif;
+  font-weight: 400;
+  font-size: 0.95rem;
+  letter-spacing: 0.25em;
+  padding: 18px 56px;
+  cursor: pointer;
+  transition: all 0.5s ease;
+  opacity: 0;
+  animation: fadeUp 1.2s ease-out 1.1s forwards;
+}
+.btn-start:hover {
+  background: var(--accent-gold-dim);
+  box-shadow: 0 0 40px var(--accent-gold-dim);
+}
+
+/* === QUESTION SCREEN === */
+.question-screen {
+  min-height: 100vh;
+  padding: 40px 24px 120px;
+}
+
+.progress-area {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 20px 0 24px;
+  background: linear-gradient(to bottom, var(--bg-deep) 60%, transparent);
+}
+
+.progress-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+.progress-number {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  color: var(--text-dim);
+}
+.progress-fraction {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem;
+  color: var(--accent-gold);
+  font-weight: 300;
+}
+.progress-fraction span {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 2px;
+  background: var(--border-subtle);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-mystic), var(--accent-gold));
+  border-radius: 1px;
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Question Card */
+.question-card {
+  margin-top: 32px;
+  padding: 40px 0;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.question-category {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 20px;
+}
+
+.question-text {
+  font-family: 'Noto Serif JP', serif;
+  font-weight: 400;
+  font-size: 1.15rem;
+  line-height: 1.9;
+  color: var(--text-primary);
+  margin-bottom: 48px;
+}
+
+/* Likert Scale */
+.likert-scale {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.likert-option {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: transparent;
+}
+.likert-option:hover {
+  border-color: var(--border-active);
+  background: var(--accent-gold-dim);
+}
+.likert-option.selected {
+  border-color: var(--accent-gold);
+  background: var(--accent-gold-dim);
+}
+
+.likert-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--text-dim);
+  margin-right: 16px;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+.likert-option.selected .likert-dot {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 8px var(--accent-gold-dim);
+}
+
+.likert-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
+}
+.likert-option.selected .likert-label {
+  color: var(--text-primary);
+}
+
+/* Navigation */
+.question-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.btn-nav {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  padding: 12px 20px;
+  transition: color 0.3s ease;
+}
+.btn-nav:hover { color: var(--text-primary); }
+.btn-nav:disabled { opacity: 0.2; cursor: default; }
+.btn-nav:disabled:hover { color: var(--text-dim); }
+
+.btn-submit {
+  background: transparent;
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  font-family: 'Noto Serif JP', serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  padding: 14px 40px;
+  cursor: pointer;
+  transition: all 0.4s ease;
+}
+.btn-submit:hover {
+  background: var(--accent-gold-dim);
+  box-shadow: 0 0 30px var(--accent-gold-dim);
+}
+
+/* === RESULT SCREEN === */
+.result-screen {
+  min-height: 100vh;
+  padding: 80px 24px 120px;
+}
+
+.result-reveal {
+  text-align: center;
+  margin-bottom: 64px;
+  animation: fadeUp 1s ease-out 0.2s both;
+}
+
+.result-label-top {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 32px;
+}
+
+.result-archetype-symbol {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 32px;
+}
+.result-archetype-symbol svg {
+  width: 100%;
+  height: 100%;
+}
+
+.result-archetype-name {
+  font-family: 'Noto Serif JP', serif;
+  font-weight: 600;
+  font-size: 1.8rem;
+  letter-spacing: 0.15em;
+  color: var(--accent-gold);
+  margin-bottom: 8px;
+}
+
+.result-archetype-en {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.3em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.result-archetype-subtitle {
+  font-family: 'Noto Serif JP', serif;
+  font-weight: 300;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 48px;
+}
+
+.result-description {
+  text-align: left;
+  font-size: 0.9rem;
+  line-height: 2;
+  color: var(--text-secondary);
+  max-width: 520px;
+  margin: 0 auto 64px;
+  animation: fadeUp 1s ease-out 0.5s both;
+}
+
+/* Base Scores Section */
+.result-section {
+  margin-bottom: 48px;
+  animation: fadeUp 1s ease-out 0.7s both;
+}
+
+.result-section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.base-scores {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.base-score-card {
+  padding: 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+.base-score-card.highest {
+  border-color: var(--accent-gold);
+  background: var(--accent-gold-dim);
+}
+.base-score-card.highest::before {
+  content: '最高';
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  color: var(--accent-gold);
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+}
+
+.base-score-symbol {
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+}
+.base-score-name {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.base-score-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.8rem;
+  font-weight: 300;
+  color: var(--text-primary);
+}
+.base-score-max {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+/* EQ Scores */
+.eq-scores {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.eq-card {
+  padding: 20px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  text-align: center;
+}
+.eq-card.highest {
+  border-color: var(--accent-mystic);
+  background: var(--accent-mystic-dim);
+}
+.eq-card .eq-label {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  letter-spacing: 0.05em;
+}
+.eq-card .eq-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem;
+  font-weight: 300;
+  color: var(--text-primary);
+}
+
+/* === ADMIN PANEL === */
+.admin-toggle {
+  text-align: center;
+  margin-top: 48px;
+  animation: fadeUp 1s ease-out 1s both;
+}
+.btn-admin {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-dim);
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.btn-admin:hover {
+  border-color: var(--text-dim);
+  color: var(--text-secondary);
+}
+
+.admin-panel {
+  display: none;
+  margin-top: 32px;
+  padding: 32px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  animation: fadeIn 0.4s ease-out;
+}
+.admin-panel.open { display: block; }
+
+.admin-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 24px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+.admin-table th {
+  text-align: left;
+  font-weight: 400;
+  color: var(--text-dim);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+.admin-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+.admin-table tr:last-child td { border-bottom: none; }
+.admin-table .score-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+.admin-table .score-highlight {
+  color: var(--accent-gold);
+}
+
+/* === ANIMATIONS === */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 520px) {
+  .landing h1 { font-size: 1.5rem; }
+  .base-scores { grid-template-columns: 1fr; }
+  .eq-scores { grid-template-columns: 1fr; }
+  .question-text { font-size: 1.05rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="atmosphere"></div>
+
+<!-- ========== LANDING ========== -->
+<div class="screen active" id="screen-landing">
+<div class="container landing">
+  <div class="landing-sigil">
+    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(201,169,110,0.2)" stroke-width="0.5"/>
+      <circle cx="60" cy="60" r="35" fill="none" stroke="rgba(201,169,110,0.15)" stroke-width="0.5"/>
+      <circle cx="60" cy="60" r="20" fill="none" stroke="rgba(201,169,110,0.1)" stroke-width="0.5"/>
+      <line x1="60" y1="8" x2="60" y2="112" stroke="rgba(201,169,110,0.06)" stroke-width="0.5"/>
+      <line x1="8" y1="60" x2="112" y2="60" stroke="rgba(201,169,110,0.06)" stroke-width="0.5"/>
+      <polygon points="60,15 95,80 25,80" fill="none" stroke="rgba(123,110,167,0.2)" stroke-width="0.5"/>
+      <polygon points="60,105 25,40 95,40" fill="none" stroke="rgba(123,110,167,0.12)" stroke-width="0.5"/>
+      <circle cx="60" cy="60" r="3" fill="rgba(201,169,110,0.4)"/>
+    </svg>
+  </div>
+
+  <h1>魂のアーキタイプ診断</h1>
+  <div class="landing-sub">Soul Archetype Diagnosis</div>
+  <div class="landing-desc">
+    31の問いに答えることで、<br>
+    あなたの魂が持つ12のアーキタイプのうち<br>
+    最も強く響くものを明らかにします。
+  </div>
+  <button class="btn-start" onclick="startQuiz()">診 断 を 始 め る</button>
+</div>
+</div>
+
+<!-- ========== QUESTIONS ========== -->
+<div class="screen" id="screen-questions">
+<div class="container question-screen">
+  <div class="progress-area">
+    <div class="progress-top">
+      <span class="progress-number">QUESTION</span>
+      <span class="progress-fraction"><span id="q-current">1</span> <span>/ 31</span></span>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progress-fill" style="width: 3.2%"></div>
+    </div>
+  </div>
+
+  <div class="question-card" id="question-card">
+    <div class="question-category" id="q-category">BIG FIVE — AGREEABLENESS</div>
+    <div class="question-text" id="q-text">私は他人に不満を持ち，揉め事を起こしやすいと思う</div>
+
+    <div class="likert-scale" id="likert-scale">
+      <div class="likert-option" onclick="selectOption(this, 1)">
+        <div class="likert-dot"></div>
+        <div class="likert-label">全くあてはまらない</div>
+      </div>
+      <div class="likert-option" onclick="selectOption(this, 2)">
+        <div class="likert-dot"></div>
+        <div class="likert-label">あてはまらない</div>
+      </div>
+      <div class="likert-option" onclick="selectOption(this, 3)">
+        <div class="likert-dot"></div>
+        <div class="likert-label">どちらともいえない</div>
+      </div>
+      <div class="likert-option" onclick="selectOption(this, 4)">
+        <div class="likert-dot"></div>
+        <div class="likert-label">あてはまる</div>
+      </div>
+      <div class="likert-option" onclick="selectOption(this, 5)">
+        <div class="likert-dot"></div>
+        <div class="likert-label">とてもよくあてはまる</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="question-nav">
+    <button class="btn-nav" id="btn-prev" onclick="prevQuestion()" disabled>← 戻る</button>
+    <button class="btn-nav" id="btn-next" onclick="nextQuestion()" style="display:none;">次へ →</button>
+    <button class="btn-submit" id="btn-result" onclick="showResult()" style="display:none;">結果を見る</button>
+  </div>
+</div>
+</div>
+
+<!-- ========== RESULT ========== -->
+<div class="screen" id="screen-result">
+<div class="container result-screen">
+
+  <div class="result-reveal">
+    <div class="result-label-top">Your Soul Archetype</div>
+
+    <div class="result-archetype-symbol">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(201,169,110,0.3)" stroke-width="0.5"/>
+        <polygon points="50,12 88,72 12,72" fill="none" stroke="var(--accent-gold)" stroke-width="1" opacity="0.6"/>
+        <circle cx="50" cy="50" r="18" fill="none" stroke="var(--accent-gold)" stroke-width="0.8" opacity="0.4"/>
+        <circle cx="50" cy="50" r="4" fill="var(--accent-gold)" opacity="0.6"/>
+        <line x1="50" y1="12" x2="50" y2="32" stroke="var(--accent-gold)" stroke-width="0.5" opacity="0.3"/>
+        <line x1="12" y1="72" x2="32" y2="62" stroke="var(--accent-gold)" stroke-width="0.5" opacity="0.3"/>
+        <line x1="88" y1="72" x2="68" y2="62" stroke="var(--accent-gold)" stroke-width="0.5" opacity="0.3"/>
+      </svg>
+    </div>
+
+    <div class="result-archetype-name">英雄</div>
+    <div class="result-archetype-en">The Hero</div>
+    <div class="result-archetype-subtitle">— 光をもたらす者 —</div>
+  </div>
+
+  <div class="result-description">
+    あなたの魂は「英雄」のアーキタイプと最も強く共鳴しています。内なる意志の力で道を切り拓き、困難を前にしても目的に向かって歩み続ける力を持っています。他者の感情に寄り添いながらも、自分の信念を曲げない強さが、あなたの核にある光です。周囲の人々は、あなたの中に静かな勇気と導きの力を感じ取っています。
+  </div>
+
+  <!-- Base Scores -->
+  <div class="result-section">
+    <div class="result-section-title">Base Pattern — 基盤パターン</div>
+    <div class="base-scores">
+      <div class="base-score-card highest">
+        <div class="base-score-symbol">〇</div>
+        <div class="base-score-name">活力・想像ベース</div>
+        <div class="base-score-value">7.8 <span class="base-score-max">/ 10</span></div>
+      </div>
+      <div class="base-score-card">
+        <div class="base-score-symbol">△</div>
+        <div class="base-score-name">規律・責任ベース</div>
+        <div class="base-score-value">6.2 <span class="base-score-max">/ 10</span></div>
+      </div>
+      <div class="base-score-card">
+        <div class="base-score-symbol">☆</div>
+        <div class="base-score-name">調和・適応ベース</div>
+        <div class="base-score-value">5.9 <span class="base-score-max">/ 10</span></div>
+      </div>
+      <div class="base-score-card">
+        <div class="base-score-symbol">♡</div>
+        <div class="base-score-name">寛容・育成ベース</div>
+        <div class="base-score-value">6.8 <span class="base-score-max">/ 10</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EQ Scores -->
+  <div class="result-section" style="animation-delay: 0.9s;">
+    <div class="result-section-title">Emotional Intelligence — 情動知能</div>
+    <div class="eq-scores">
+      <div class="eq-card">
+        <div class="eq-label">自己理解</div>
+        <div class="eq-value">3.8</div>
+      </div>
+      <div class="eq-card highest">
+        <div class="eq-label">他者理解</div>
+        <div class="eq-value">4.2</div>
+      </div>
+      <div class="eq-card">
+        <div class="eq-label">状況対応</div>
+        <div class="eq-value">3.5</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Panel Toggle -->
+  <div class="admin-toggle">
+    <button class="btn-admin" onclick="toggleAdmin()">スコア詳細を表示</button>
+  </div>
+
+  <div class="admin-panel" id="admin-panel">
+    <div class="admin-title">Score Breakdown — 全スコア一覧（管理用）</div>
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>スコア</th>
+          <th>構成</th>
+          <th>分類</th>
+          <th>得点</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>①</td>
+          <td>外向性（Q3, Q8）</td>
+          <td>Big Five</td>
+          <td class="score-val">3.5</td>
+        </tr>
+        <tr>
+          <td>②</td>
+          <td>協調性（Q1, Q26）</td>
+          <td>Big Five</td>
+          <td class="score-val">4.0</td>
+        </tr>
+        <tr>
+          <td>③</td>
+          <td>勤勉性（Q10, Q11）</td>
+          <td>Big Five</td>
+          <td class="score-val">3.2</td>
+        </tr>
+        <tr>
+          <td>④</td>
+          <td>神経症傾向（Q6, Q21）</td>
+          <td>Big Five</td>
+          <td class="score-val">2.5</td>
+        </tr>
+        <tr>
+          <td>⑤</td>
+          <td>CP（Q15, Q28, Q29）</td>
+          <td>交流分析</td>
+          <td class="score-val">3.7</td>
+        </tr>
+        <tr>
+          <td>⑥</td>
+          <td>NP（Q16, Q22, Q31）</td>
+          <td>交流分析</td>
+          <td class="score-val">4.3</td>
+        </tr>
+        <tr>
+          <td>⑦</td>
+          <td>FC（Q12, Q13, Q23）</td>
+          <td>交流分析</td>
+          <td class="score-val score-highlight">4.3</td>
+        </tr>
+        <tr>
+          <td>⑧</td>
+          <td>AC（Q4, Q18, Q25）</td>
+          <td>交流分析</td>
+          <td class="score-val">2.7</td>
+        </tr>
+        <tr>
+          <td>⑨</td>
+          <td>自己認知（Q5, Q9, Q17）</td>
+          <td>EQ</td>
+          <td class="score-val">3.8</td>
+        </tr>
+        <tr>
+          <td>⑩</td>
+          <td>他者認知（Q20, Q24, Q30）</td>
+          <td>EQ</td>
+          <td class="score-val score-highlight">4.2</td>
+        </tr>
+        <tr>
+          <td>⑪</td>
+          <td>状況対応（Q2, Q19, Q27）</td>
+          <td>EQ</td>
+          <td class="score-val">3.5</td>
+        </tr>
+        <tr>
+          <td>⑫</td>
+          <td>開放性（Q7, Q14）</td>
+          <td>Big Five / TB</td>
+          <td class="score-val">3.0</td>
+        </tr>
+        <tr style="background: var(--accent-gold-dim);">
+          <td colspan="2" style="font-weight: 500; color: var(--text-primary);">基盤パターン判定</td>
+          <td colspan="2" style="color: var(--accent-gold);">〇（①+⑦ = 7.8）→ 活力・想像ベース</td>
+        </tr>
+        <tr style="background: var(--accent-mystic-dim);">
+          <td colspan="2" style="font-weight: 500; color: var(--text-primary);">EQ判定</td>
+          <td colspan="2" style="color: var(--accent-mystic);">⑩（4.2）→ 他者認知</td>
+        </tr>
+        <tr style="background: rgba(201,169,110,0.08);">
+          <td colspan="2" style="font-weight: 500; color: var(--accent-gold);">最終判定</td>
+          <td colspan="2" style="color: var(--accent-gold); font-size: 1rem;">〇⑩型 → 英雄</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ==========================================
+// QUESTIONS DATA (31 questions, free version)
+// ==========================================
+const questions = [
+  { id: 1,  text: "私は他人に不満を持ち，揉め事を起こしやすいと思う", cat: "Big Five — Agreeableness" },
+  { id: 2,  text: "嫌なことがあっても、状況によっては表情に出さずにいられる", cat: "EQ — Situation" },
+  { id: 3,  text: "私は控えめで大人しいと思う", cat: "Big Five — Extraversion" },
+  { id: 4,  text: "自分の感情を抑え、耐える傾向が強い", cat: "TA — Adapted Child" },
+  { id: 5,  text: "自分の長所や欠点、コミュニケーションの癖などを理解している", cat: "EQ — Self" },
+  { id: 6,  text: "私は心配性でうろたえやすいと思う", cat: "Big Five — Neuroticism" },
+  { id: 7,  text: "私は発想力にかけた平凡な人間だと思う", cat: "Big Five — Openness" },
+  { id: 8,  text: "私は自分自身の事を活発で外向的だと思う", cat: "Big Five — Extraversion" },
+  { id: 9,  text: "気分が悪い、イライラしている、不安になっているなど自分の感情の状態を自覚できる", cat: "EQ — Self" },
+  { id: 10, text: "私はしっかりしていて自分に厳しいと思う", cat: "Big Five — Conscientiousness" },
+  { id: 11, text: "私はだらしなく，うっかりしていると思う", cat: "Big Five — Conscientiousness" },
+  { id: 12, text: "他人の目より、自分がどうしたいかを重視する", cat: "TA — Free Child" },
+  { id: 13, text: "直感で判断し、行動が早い方だ", cat: "TA — Free Child" },
+  { id: 14, text: "私は新しい事が好きで変わった考えを持っていると思う", cat: "Big Five — Openness" },
+  { id: 15, text: "他人に注意、指摘できる方だ", cat: "TA — Critical Parent" },
+  { id: 16, text: "差し入れや贈り物をするのが好きである", cat: "TA — Nurturing Parent" },
+  { id: 17, text: "自分の目標ややりたいことがはっきりしている", cat: "EQ — Self" },
+  { id: 18, text: "他人の期待に応えようとする事が多い", cat: "TA — Adapted Child" },
+  { id: 19, text: "人から頼みごとをされても、出来そうにない場合は上手に断れる", cat: "EQ — Situation" },
+  { id: 20, text: "人から悩み事などよく相談される", cat: "EQ — Others" },
+  { id: 21, text: "私は冷静で気分が安定していると思う", cat: "Big Five — Neuroticism" },
+  { id: 22, text: "植物や動物、子供の世話が好きな方だ", cat: "TA — Nurturing Parent" },
+  { id: 23, text: "趣味や好きな事は突き詰める傾向が強い", cat: "TA — Free Child" },
+  { id: 24, text: "人と話している時、言葉そのものよりも、その人の気持ちや言いたいことに気づく", cat: "EQ — Others" },
+  { id: 25, text: "現在「自分らしい自分」から離れていると感じる", cat: "TA — Adapted Child" },
+  { id: 26, text: "私は人に気を遣う優しい人間だと思う", cat: "Big Five — Agreeableness" },
+  { id: 27, text: "暴飲・暴食・衝動買いなどすることはあまりない", cat: "EQ — Situation" },
+  { id: 28, text: "気分が乗らなくても目的重視の行動を取れる方だ", cat: "TA — Critical Parent" },
+  { id: 29, text: "遅刻はほぼ無く、時間厳守する方だ", cat: "TA — Critical Parent" },
+  { id: 30, text: "TVや映画を見ていて、泣いたり感情移入することがある", cat: "EQ — Others" },
+  { id: 31, text: "他人の役に立てると、特に強い喜びを感じる", cat: "TA — Nurturing Parent" },
+];
+
+let currentQ = 0;
+let answers = new Array(31).fill(null);
+
+function startQuiz() {
+  document.getElementById('screen-landing').classList.remove('active');
+  document.getElementById('screen-questions').classList.add('active');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[currentQ];
+  document.getElementById('q-current').textContent = currentQ + 1;
+  document.getElementById('progress-fill').style.width = ((currentQ + 1) / 31 * 100) + '%';
+  document.getElementById('q-category').textContent = q.cat;
+  document.getElementById('q-text').textContent = q.text;
+
+  // Reset selections
+  const options = document.querySelectorAll('.likert-option');
+  options.forEach(opt => opt.classList.remove('selected'));
+  if (answers[currentQ] !== null) {
+    options[answers[currentQ] - 1].classList.add('selected');
+  }
+
+  // Nav buttons
+  document.getElementById('btn-prev').disabled = currentQ === 0;
+  if (currentQ === 30) {
+    document.getElementById('btn-next').style.display = 'none';
+    document.getElementById('btn-result').style.display = 'inline-block';
+  } else {
+    document.getElementById('btn-next').style.display = answers[currentQ] !== null ? 'inline-block' : 'none';
+    document.getElementById('btn-result').style.display = 'none';
+  }
+
+  // Animate
+  const card = document.getElementById('question-card');
+  card.style.animation = 'none';
+  card.offsetHeight;
+  card.style.animation = 'fadeIn 0.4s ease-out';
+}
+
+function selectOption(el, value) {
+  document.querySelectorAll('.likert-option').forEach(opt => opt.classList.remove('selected'));
+  el.classList.add('selected');
+  answers[currentQ] = value;
+
+  // Show next/submit after selection
+  if (currentQ === 30) {
+    document.getElementById('btn-result').style.display = 'inline-block';
+  } else {
+    document.getElementById('btn-next').style.display = 'inline-block';
+  }
+
+  // Auto-advance after brief pause
+  if (currentQ < 30) {
+    setTimeout(() => { nextQuestion(); }, 400);
+  }
+}
+
+function nextQuestion() {
+  if (currentQ < 30) {
+    currentQ++;
+    renderQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function prevQuestion() {
+  if (currentQ > 0) {
+    currentQ--;
+    renderQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function showResult() {
+  document.getElementById('screen-questions').classList.remove('active');
+  document.getElementById('screen-result').classList.add('active');
+  window.scrollTo({ top: 0 });
+}
+
+function toggleAdmin() {
+  const panel = document.getElementById('admin-panel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+</script>
+
+</body>
+</html>
